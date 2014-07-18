@@ -1,0 +1,41 @@
+#!/usr/bin/env dart
+import 'dart:io';
+import 'package:args/args.dart';
+import 'package:analyzer/analyzer.dart';
+import 'lib/dart2es6.dart';
+
+main(List<String> arguments) {
+  var OUTPUT = 'output';
+  var HELP = 'help';
+  ArgResults args;
+  final parser = new ArgParser(allowTrailingOptions: true)
+      ..addOption(OUTPUT, help: "Generate the output into <file>", abbr: 'o', defaultsTo: 'out.js')
+      ..addFlag(HELP, help: "Display this message", negatable: false, abbr: 'h');
+
+  StringBuffer usageBuffer = new StringBuffer("Usage: dart2es6 [options] dartfile\n");
+  usageBuffer.write('\nTranspiles Dart to ES6.\n\n Options:\n');
+  usageBuffer.write(parser.getUsage());
+  var usage = usageBuffer.toString();
+
+  var input, output;
+  try {
+    args = parser.parse(arguments);
+    if (args[HELP]) {
+      print(usage);
+      exit(0);
+    }
+    if (args.rest.isEmpty) throw new FormatException("No input specified.");
+    input = args.rest.first;
+    if (args.rest.length > 1) {
+      throw new FormatException("Extra arguments: '${args.rest.sublist(1).join(' ')}'.");
+    }
+    output = args[OUTPUT];
+  } on FormatException catch(e) {
+    print(usage);
+    print("\nError: " + e.message);
+    exit(1);
+  }
+
+  File outFile = new File(output);
+  new Transpiler.fromAst(parseDartFile(input), outFile.openWrite(mode: FileMode.WRITE)).transpile();
+}

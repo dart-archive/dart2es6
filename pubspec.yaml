@@ -1,0 +1,13 @@
+name: dart2es6
+version: 0.0.0
+authors:
+- Anting Shen <shenantingtt@gmail.com>
+description: Dart to ECMAScript 6 transpiler
+homepage:
+environment:
+  sdk: '>=1.5.0'
+dependencies:
+  analyzer: '0.21.1'
+  args: '>=0.11.0'
+dev_dependencies:
+  guinness: '>=0.1.11'
