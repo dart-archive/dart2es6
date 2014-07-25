@@ -4,7 +4,7 @@ import 'writer.dart';
 class NullVisitor implements AstVisitor {
   
   _complain(node) {
-    print("Undefined: node.runtimeType");
+    print("Undefined in ${this.runtimeType}: ${node.runtimeType}");
     return new IndentedStringBuffer("<${node.runtimeType}>");
   }
   

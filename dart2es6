@@ -37,5 +37,7 @@ main(List<String> arguments) {
   }
 
   File outFile = new File(output);
-  new Transpiler.fromAst(parseDartFile(input), outFile.openWrite(mode: FileMode.WRITE)).transpile();
+  outFile.openWrite(mode: FileMode.WRITE)
+      ..write(new Transpiler.fromPath(input).transpile())
+      ..close();
 }

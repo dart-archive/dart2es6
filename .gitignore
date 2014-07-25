@@ -2,6 +2,8 @@
 build/
 packages/
 test/packages
+test/out
+node_modules/
 
 # Or the files created by dart2js.
 *.dart.js

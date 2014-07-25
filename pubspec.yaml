@@ -8,6 +8,7 @@ environment:
   sdk: '>=1.5.0'
 dependencies:
   analyzer: '0.21.1'
+  code_transformers: 'any'
   args: '>=0.11.0'
 dev_dependencies:
   guinness: '>=0.1.11'
