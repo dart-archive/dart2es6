@@ -17,6 +17,10 @@ class BlockVisitor extends NullVisitor {
     if (shadows.isNotEmpty) throw "Variable shadows global/builtin: ${name}";
   }
 
+  visitAdjacentStrings(AdjacentStrings node) {
+    return node.strings.map((s) => s.accept(this)).join(' + ');
+  }
+
   visitArgumentList(ArgumentList node) {
     var buffer = new IndentedStringBuffer('(');
     buffer.write(node.arguments.map((a) => a.accept(this)).join(', '));

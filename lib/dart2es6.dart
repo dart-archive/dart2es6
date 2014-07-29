@@ -15,7 +15,8 @@ class Transpiler {
   CompilationUnit compilationUnit;
   MainVisitor visitor;
 
-  Transpiler.fromPath(String path) : visitor = new MainVisitor() {
+  Transpiler.fromPath(String path, {test: false})
+      : visitor = (test ? new TestVisitor() : new MainVisitor()) {
     JavaSystemIO.setProperty("com.google.dart.sdk", dartSdkDirectory);
     DartSdk sdk = DirectoryBasedDartSdk.defaultSdk;
 

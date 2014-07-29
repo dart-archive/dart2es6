@@ -4,11 +4,13 @@ import 'package:analyzer/analyzer.dart';
 import 'package:analyzer/src/generated/element.dart' show DartType;
 import 'visitor_null.dart';
 import 'writer.dart';
+import 'dart:io';
 
 part 'visitor_block.dart';
+part 'visitor_test.dart';
 part "replacements.dart";
 
-_doesNotShadow(String name) => true; // TODO: top level shadowing check
+_doesNotShadow(String name) => true; // TODO: top level shadowing check against globals
 
 class MainVisitor extends NullVisitor {
 
@@ -58,7 +60,7 @@ class ClassVisitor extends NullVisitor {
     name = node.name.toString();
     node.members.where((m) => m is FieldDeclaration).forEach((FieldDeclaration member) {
       var isStatic = member.isStatic;
-      var type = member.fields.type.name.name;
+      var type = member.fields.type == null ? null : member.fields.type.name.name;
       var isConst = member.fields.isConst;
       var isFinal = member.fields.isFinal;
       member.fields.variables.forEach((VariableDeclaration declaration) {
@@ -72,7 +74,7 @@ class ClassVisitor extends NullVisitor {
     if (node.documentationComment != null) {
       output.writeln(node.documentationComment.accept(new BlockVisitor()));
     }
-    output.write("class $name {\n"); // TODO: Static fields
+    output.write("export class $name {\n"); // TODO: Static fields
     var input = new IndentedStringBuffer();
     input.write(node.members.where((m) => m is! FieldDeclaration).map((ClassMember member) {
       return member.accept(this);
