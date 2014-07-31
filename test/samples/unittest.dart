@@ -44,11 +44,11 @@ class Methods2 {
 }
 
 @describe
-class Constructor1 {
+class Constructors1 {
   var field1;
   var field2 = 2;
   var field3 = globalFunction() + 2;
-  Constructor1();
+  Constructors1();
   @it
   shouldSetDeclaredFieldsToNullByDefault() => field1;
   @it
@@ -58,23 +58,25 @@ class Constructor1 {
 }
 
 @describe
-class Constructor2 {
-
+class Constructors2 {
+  @it
+  shouldInitializeFieldsWithThisShorthandNotation() => new ConstructorHelper1(5).field1;
+  @it
+  shouldInitializeFieldsWithInitializerList() => new ConstructorHelper2(6).field1;
+  @it
+  shouldSetFieldsToNullBeforeConstructorBodyExecutes() => new ConstructorHelper3().field1;
 }
 
-@helperFor(Constructor2)
 class ConstructorHelper1 {
   var field1;
   ConstructorHelper1(this.field1);
 }
 
-@helperFor(Constructor2)
 class ConstructorHelper2 {
   var field1;
   ConstructorHelper2(f) : field1 = f;
 }
 
-@helperFor(Constructor2)
 class ConstructorHelper3 {
   var field1;
   ConstructorHelper3() {
@@ -82,18 +84,24 @@ class ConstructorHelper3 {
   }
 }
 
-class Test8 {
-  vardecl1() {
+@describe
+class VariableDeclarations {
+  @it
+  shouldDefaultToNull() {
     var a, b, c;
     return a;
   }
-
-  vardecl2() {
+  @it
+  shouldSupportAssignmentsToExpressions() {
     var b = 2, c = 2 + 3;
     return b + c;
   }
+}
 
-  ifelse() {
+@describe
+class Statements {
+  @it
+  shouldSupportIfElseAndComparisons() {
     if (1 > 2) {
       return 0;
     } else if (2 < 1) {
@@ -105,33 +113,38 @@ class Test8 {
       return 3;
     }
   }
-
-  forloop1() {
+  @it
+  shouldSupportForLoops() {
     var j = 0;
     for (var i = 1; i < 5; i++) {
       j++;
     }
     return j;
   }
-
-  forloop2() {
+  @it
+  shouldSupportForLoopsWithEmptyParts() {
     var i = 0;
     for (; globalFunctionParam(i) < 100;) {
       i = 200;
     }
-    for (; false;) i = 0;
+    for (; false;)
+      i = 0;
     return i;
   }
+}
 
-  list1() {
+@describe
+class Lists {
+  @it
+  shouldSupportLiterals() {
     return [1, 2, 3];
   }
-
-  list2() {
+  @it
+  shouldIgnoreConstructorArguments() {
     return new List(10);
   }
-
-  list3() {
+  @it
+  shouldAddElementsWithPush() {
     var a = new List();
     a.add(5);
     return a[0];

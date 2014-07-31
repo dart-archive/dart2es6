@@ -79,7 +79,7 @@ class BlockVisitor extends NullVisitor {
 
   visitDefaultFormalParameter(DefaultFormalParameter node) {
     // TODO: check for shadowing in methods
-    return "${node.identifier.name}=" +
+    return "${node.identifier.name} = " +
         (node.defaultValue == null ? "null" : node.defaultValue.accept(this));
   }
 
@@ -111,13 +111,13 @@ class BlockVisitor extends NullVisitor {
     assert(node.initialization == null);
     IndentedStringBuffer output = new IndentedStringBuffer()
         ..write("for (")
-        ..write(node.variables.accept(this))
+        ..write(node.variables == null ? "" : node.variables.accept(this))
         ..write("; ")
         ..write(node.condition.accept(this))
         ..write("; ")
-        ..write(node.updaters.map((e) => e.accept(this)).join(', '))
+        ..write(node.updaters == null ? "" : node.updaters.map((e) => e.accept(this)).join(', '))
         ..write(") {\n")
-        ..write(node.body.accept(this).indent())
+        ..write(new IndentedStringBuffer(node.body.accept(this)).indent())
         ..write("}");
     return output;
   }

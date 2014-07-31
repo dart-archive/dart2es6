@@ -10,6 +10,7 @@ import 'package:analyzer/src/generated/element.dart';
 import 'package:analyzer/src/generated/engine.dart';
 import 'package:code_transformers/resolver.dart' show dartSdkDirectory;
 import 'visitor.dart';
+import 'dart:io';
 
 class Transpiler {
   CompilationUnit compilationUnit;
@@ -17,6 +18,7 @@ class Transpiler {
 
   Transpiler.fromPath(String path, {test: false})
       : visitor = (test ? new TestVisitor() : new MainVisitor()) {
+    print(path);
     JavaSystemIO.setProperty("com.google.dart.sdk", dartSdkDirectory);
     DartSdk sdk = DirectoryBasedDartSdk.defaultSdk;
 
