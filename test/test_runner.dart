@@ -6,35 +6,71 @@ import 'package:guinness/guinness.dart';
 import 'package:path/path.dart' as path;
 import 'package:dart2es6/dart2es6.dart';
 
+const String DUMMY_CLASS_NAME = "TEST_CLASS_NAME";
+const String DUMMY_METHOD_NAME = "TEST_METHOD_NAME";
 
 Future test(String p) {
   var curDir = path.dirname(path.fromUri(Platform.script));
-  var testCaseNames;
+  Map<String, List<String>> testCaseNames;
+  var dart2es6Path = path.join(path.dirname(curDir), 'dart2es6');
   var preprocessorOutput = path.join(curDir, 'out', 'preprocessor', p + '.dart');
   var transpilerOutput = path.join(curDir, 'out', 'transpiler', p + '.js');
   var traceurOutput = path.join(curDir, 'out', 'traceur', p + '.js');
 
+  var traceurRuntime = new File(path.join(curDir, "traceur.js")).readAsStringSync();
+
   // The entire Js file gets copied for each test so only one traceur call is needed
   // Dart is done the same way to match
-  String _getJsOutput(String className, String methodName) {
-    return "";
+  Future<String> _getJsOutput(String className, String methodName) {
+    var p = path.join(curDir, 'temp-$className-$methodName.js');
+    var code = new File(traceurOutput).readAsStringSync()
+        .replaceAll(DUMMY_CLASS_NAME, className)
+        .replaceAll(DUMMY_METHOD_NAME, methodName);
+    var file = new File(p);
+    var sink = file.openWrite(mode: FileMode.WRITE)
+        ..write(traceurRuntime)
+        ..write(code);
+    return sink.close().then((_) {
+      return Process.run("node", [p]).then((result) {
+        try {
+          _checkResults(result);
+        } catch (e) {
+          throw "Error thrown while attempting to execute:\n$p\n\n$e";
+        }
+        file.delete();
+        return result.stdout;
+      });
+    });
   }
 
-  String _getDartOutput(String className, String methodName) {
-    var temp = new File('temp.dart').openWrite()
+  Future<String> _getDartOutput(String className, String methodName) {
+    var p = path.join(curDir, 'temp-$className-$methodName.dart');
+    var file = new File(p);
+    var sink = file.openWrite(mode: FileMode.WRITE)
         ..write(new File(preprocessorOutput).readAsStringSync())
-        ..write("\nmain() => print(new $className().$methodName())")
-        ..close();
-    return "";
+        ..write("\nmain() => print(new $className().$methodName());");
+    return sink.close().then((_){
+      return Process.run("dart", ['-c', p]).then((result) {
+        try {
+          _checkResults(result);
+        } catch (e) {
+          throw "Error thrown while attempting to execute:\n$p\n\n$e";
+        }
+        file.delete();
+        return result.stdout;
+      });
+    });
   }
 
   void _testClass(String className, List<String> methodNames) {
     describe(_convertName(className), () {
       methodNames.forEach((methodName) {
-        var dart = _getDartOutput(className, methodName);
-        var js = _getJsOutput(className, methodName);
         it(_convertName(methodName), () {
-          expect(dart).toEqual(js);
+          Future dart = _getDartOutput(className, methodName);
+          Future js = _getJsOutput(className, methodName);
+          return Future.wait([js, dart]).then((results) {
+            expect(results[0]).toEqual(results[1]);
+          });
         });
       });
     });
@@ -45,12 +81,12 @@ Future test(String p) {
     testCaseNames = _processTestFile(f, sink);
     sink.close();
   }).then((_) {
-    var dart2es6Path = path.join(path.dirname(curDir), 'dart2es6');
     return Process.run("dart", [dart2es6Path, '-o', transpilerOutput, preprocessorOutput])
         .then((ProcessResult results) {
           _checkResults(results);
+          if (results.stdout.isNotEmpty) print(results.stdout);
           new File(transpilerOutput).writeAsStringSync(
-              "\nconsole.log(new TEST_CLASS_NAME().TEST_METHOD_NAME());\n", mode: FileMode.APPEND);
+              "\nconsole.log(new $DUMMY_CLASS_NAME().$DUMMY_METHOD_NAME());\n", mode: FileMode.APPEND);
         });
   }).then((_) {
     // needs `npm install -g traceur`
@@ -70,13 +106,13 @@ String _convertName(String name) {
 
 void _checkResults(ProcessResult results) {
   if (results.exitCode != 0) {
-    print(results.stdout);
-    print(results.stderr);
-    exit(exitCode);
+    exitCode = results.exitCode;
+    throw results.stderr;
   }
 }
 
 //TODO: Tree shake unused helper classes
+//TODO: Automatically ddescribe parent of iit
 /// writes dart file with only selected test cases to sink, tree shakes helpers
 /// returns names of tests
 Map<String, List<String>> _processTestFile(String file, StringSink sink) {

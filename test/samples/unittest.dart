@@ -1,7 +1,11 @@
 import '../annotations.dart';
 
 globalFunction() => print('globalFunction called');
-globalFunctionParam(param) => print('globalFunctionParam called with ' + param);
+globalFunctionParam(param) {
+  print('globalFunctionParam called with ');
+  print(param);
+  return param;
+}
 
 @describe
 class Operators {
@@ -9,7 +13,7 @@ class Operators {
   shouldAdd() => 1 + 2;
   @it
   shouldFollowParenthesizedPrecedence() => (2 + 2) * 3;
-  @it
+  @xit
   shouldDivideIntegers() => 20 / 4;
   @it
   shouldHandleFloatingPointDivisionOfIntegers() => 20 / 3;
@@ -21,17 +25,26 @@ class Operators {
 
 @describe
 class Methods1 {
-  @it
-  shouldAcceptRequiredParameters(a, b) {
+  helper1(a, b) {
     return a + b;
   }
   @it
-  shouldAcceptPositionalParameters([something]) {
+  shouldAcceptRequiredParameters() {
+    return helper1(1, 2);
+  }
+  helper2([something]) {
     return something;
   }
   @it
-  shouldAcceptPositionalParametersWithDefaultValues([something = 1+1]) {
+  shouldAcceptPositionalParameters() {
+    return helper2(3);
+  }
+  helper3([something = 1+1]) {
     return something;
+  }
+  @it
+  shouldAcceptPositionalParametersWithDefaultValues() {
+    return helper3();
   }
 }
 
@@ -40,6 +53,7 @@ class Methods2 {
   @it
   shouldCallFunctions() {
     globalFunction();
+    return 1;
   }
 }
 
@@ -47,7 +61,7 @@ class Methods2 {
 class Constructors1 {
   var field1;
   var field2 = 2;
-  var field3 = globalFunction() + 2;
+  var field3 = globalFunctionParam(5) + 2;
   Constructors1();
   @it
   shouldSetDeclaredFieldsToNullByDefault() => field1;
@@ -61,7 +75,7 @@ class Constructors1 {
 class Constructors2 {
   @it
   shouldInitializeFieldsWithThisShorthandNotation() => new ConstructorHelper1(5).field1;
-  @it
+  @xit // TODO
   shouldInitializeFieldsWithInitializerList() => new ConstructorHelper2(6).field1;
   @it
   shouldSetFieldsToNullBeforeConstructorBodyExecutes() => new ConstructorHelper3().field1;
@@ -86,7 +100,7 @@ class ConstructorHelper3 {
 
 @describe
 class VariableDeclarations {
-  @it
+  @xit
   shouldDefaultToNull() {
     var a, b, c;
     return a;
@@ -136,11 +150,11 @@ class Statements {
 @describe
 class Lists {
   @it
-  shouldSupportLiterals() {
-    return [1, 2, 3];
+  shouldSupportLiteralsAndIndexing() {
+    return [1, 2, 3][1];
   }
-  @it
-  shouldIgnoreConstructorArguments() {
+  @xit
+  shouldSupportConstructorArguments() {
     return new List(10);
   }
   @it

@@ -43,6 +43,13 @@ class Field {
   final bool isStatic;
   final bool isConst;
   Field(this.name, this.value, this.type, this.isFinal, this.isStatic, this.isConst);
+  toString() => name;
+}
+
+class Method {
+  final String name;
+  Method(this.name);
+  toString() => name;
 }
 
 /**
@@ -52,6 +59,7 @@ class ClassVisitor extends NullVisitor {
 
   String name;
   List<Field> fields = [];
+  List<Method> methods = [];
 
   ClassVisitor();
 
@@ -68,6 +76,10 @@ class ClassVisitor extends NullVisitor {
             type, isFinal, isStatic, isConst);
         fields.add(field);
       });
+    });
+    node.members.where((m) => m is MethodDeclaration).forEach((MethodDeclaration member) {
+      var method = new Method(member.name.toString());
+      methods.add(method);
     });
 
     var output = new IndentedStringBuffer();

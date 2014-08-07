@@ -1,2 +1,0 @@
-#!/bin/sh
-./dart2es6 -t -o test/out/unittest.js test/samples/unittest.dart

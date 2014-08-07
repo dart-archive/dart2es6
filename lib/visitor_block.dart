@@ -228,7 +228,7 @@ class BlockVisitor extends NullVisitor {
       assert(node.period != null);
       target = '${node.target.accept(this)}.';
       method = _replacedField(node.target.bestType, method);
-    } else if (cls != null && cls.fields.where((f) => f.name == node.methodName).isNotEmpty) {
+    } else if (cls != null && cls.methods.where((f) => f.name == node.methodName.name).isNotEmpty) {
       target = "this.";
     }
     return "$target$method${node.argumentList.accept(this)}";
