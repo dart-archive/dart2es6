@@ -33,6 +33,16 @@ class MainVisitor extends NullVisitor {
   visitFunctionDeclaration(FunctionDeclaration node) {
     return node.accept(new BlockVisitor());
   }
+
+  visitFunctionTypeAlias(FunctionTypeAlias node) {
+    return "// $node";
+  }
+
+  visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
+    var visitor = new BlockVisitor();
+    var vars = node.variables.variables.map((v) => v.accept(visitor)).join(', ');
+    return '$vars;'; // TODO: types, const, final
+  }
 }
 
 class Field {
@@ -86,7 +96,9 @@ class ClassVisitor extends NullVisitor {
     if (node.documentationComment != null) {
       output.writeln(node.documentationComment.accept(new BlockVisitor()));
     }
-    output.write("export class $name {\n"); // TODO: Static fields
+    output.write("export class $name ");
+    if (node.extendsClause != null) output.write("${node.extendsClause.accept(this)} ");
+    output.write("{\n");
     var input = new IndentedStringBuffer();
     input.write(node.members.where((m) => m is! FieldDeclaration).map((ClassMember member) {
       return member.accept(this);
@@ -94,8 +106,14 @@ class ClassVisitor extends NullVisitor {
     input.indent();
     output.write(input);
     output.write('}\n');
+    fields.where((f) => f.isStatic).forEach((field) {
+      var value = field.value == null ? "null" : field.value.accept(new BlockVisitor());
+      output.write("$name.${field.name} = $value;\n");
+    });
     return output;
   }
+
+  visitExtendsClause(ExtendsClause node) => "extends ${node.superclass.name.name}";
 
   visitMethodDeclaration(MethodDeclaration node) {
     return node.accept(new BlockVisitor(this));

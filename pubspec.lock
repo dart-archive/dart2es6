@@ -16,7 +16,7 @@ packages:
   code_transformers:
     description: code_transformers
     source: hosted
-    version: "0.1.5"
+    version: "0.1.6"
   collection:
     description: collection
     source: hosted
@@ -44,7 +44,11 @@ packages:
   source_maps:
     description: source_maps
     source: hosted
-    version: "0.9.3"
+    version: "0.9.4"
+  source_span:
+    description: source_span
+    source: hosted
+    version: "1.0.0"
   stack_trace:
     description: stack_trace
     source: hosted

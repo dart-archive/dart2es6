@@ -3,16 +3,24 @@ part of dart2es6.visitor;
 class BlockVisitor extends NullVisitor {
 
   final ClassVisitor cls;
+  String errorVariableName;
+
   BlockVisitor([this.cls = null]);
 
-  bool _isField(name) {
+  Field _getField(name) {
+    if (cls == null) return null;
     if (name is SimpleIdentifier) name = name.name;
-    return (cls != null && cls.fields.where((f) => f.name == name).isNotEmpty);
+    var fields = cls.fields.where((f) => f.name == name);
+    if (fields.isEmpty) return null;
+    assert (fields.length == 1);
+    return fields.first;
   }
 
   _checkDeclarationShadowing(String name) {
     var shadows = cls == null ? [] : cls.fields.where((f) => f.name == name);
-    if (shadows.isNotEmpty) throw "Variable shadows field: ${name}";
+    if (shadows.isNotEmpty) {
+      throw "Variable shadows field: ${name}" + (cls == null ? "" : " in ${cls.name}");
+    }
     shadows = GLOBAL_REPLACE.keys.where((f) => f == name);
     if (shadows.isNotEmpty) throw "Variable shadows global/builtin: ${name}";
   }
@@ -28,9 +36,11 @@ class BlockVisitor extends NullVisitor {
     return buffer;
   }
 
+  visitAsExpression(AsExpression node) => node.expression.accept(this);
+
   visitAssertStatement(AssertStatement node) {
     // TODO: Keep asserts or not?
-    return "// console.assert(${node.condition.accept(this)});";
+    return "/* console.assert(${node.condition.accept(this)}); */";
   }
 
   visitAssignmentExpression(AssignmentExpression node) {
@@ -41,7 +51,7 @@ class BlockVisitor extends NullVisitor {
 
   visitBinaryExpression(BinaryExpression node) {
     var op = node.operator.toString();
-    assert(["+","-","*","/","==","!=","<","<=",">",">="].contains(op) || print(op));
+    assert(["+","-","*","/","%","==","!=","<","<=",">",">=","&&","||","&","|","^"].contains(op));
     if (op == "==" || op == "!=") op += "=";
     return "${node.leftOperand.accept(this)} $op ${node.rightOperand.accept(this)}";
   }
@@ -57,6 +67,8 @@ class BlockVisitor extends NullVisitor {
   }
 
   visitBooleanLiteral(BooleanLiteral node) => node.literal.toString();
+
+  visitBreakStatement(BreakStatement node) => "break;";
 
   visitConditionalExpression(ConditionalExpression node) {
     return "${node.condition.accept(this)} ? ${node.thenExpression.accept(this)}"
@@ -80,11 +92,25 @@ class BlockVisitor extends NullVisitor {
   visitDefaultFormalParameter(DefaultFormalParameter node) {
     // TODO: check for shadowing in methods
     return "${node.identifier.name} = " +
-        (node.defaultValue == null ? "null" : node.defaultValue.accept(this));
+        (node.defaultValue == null ? "null" : node.defaultValue.accept(this).toString());
+  }
+
+  visitDoStatement(DoStatement node) {
+    var output = new IndentedStringBuffer()
+        ..write("do {\n")
+        ..write(new IndentedStringBuffer(node.body.accept(this)).indent())
+        ..write("}\nwhile(")
+        ..write(node.condition.accept(this))
+        ..write(");");
+    return output;
   }
 
   visitDoubleLiteral(DoubleLiteral node) {
     return node.literal.toString();
+  }
+
+  visitEmptyFunctionBody(EmptyFunctionBody node) {
+    return 'throw new Error("abstract function not implemented");';
   }
 
   visitExpressionFunctionBody(ExpressionFunctionBody node) {
@@ -108,14 +134,32 @@ class BlockVisitor extends NullVisitor {
   }
 
   visitForStatement(ForStatement node) {
-    assert(node.initialization == null);
+    assert(node.initialization == null || node.variables == null);
     IndentedStringBuffer output = new IndentedStringBuffer()
-        ..write("for (")
-        ..write(node.variables == null ? "" : node.variables.accept(this))
-        ..write("; ")
-        ..write(node.condition.accept(this))
-        ..write("; ")
-        ..write(node.updaters == null ? "" : node.updaters.map((e) => e.accept(this)).join(', '))
+      ..write("for (")
+      ..write(node.initialization == null ? "": node.initialization.accept(this))
+      ..write(node.variables == null ? "" : node.variables.accept(this))
+      ..write("; ")
+      ..write(node.condition.accept(this))
+      ..write("; ")
+      ..write(node.updaters == null ? "" : node.updaters.map((e) => e.accept(this)).join(', '))
+      ..write(") {\n")
+      ..write(new IndentedStringBuffer(node.body.accept(this)).indent())
+      ..write("}");
+    return output;
+  }
+
+  visitForEachStatement(ForEachStatement node) {
+    assert(node.awaitKeyword == null);
+    var identifier;
+    if (node.loopVariable != null) {
+      identifier = "var " + node.loopVariable.identifier.name;
+    } else {
+      identifier = node.identifier.name;
+    }
+    var output = new IndentedStringBuffer()
+        ..write("for ($identifier of ")
+        ..write(node.iterator.accept(this))
         ..write(") {\n")
         ..write(new IndentedStringBuffer(node.body.accept(this)).indent())
         ..write("}");
@@ -145,6 +189,20 @@ class BlockVisitor extends NullVisitor {
     return output;
   }
 
+  visitFunctionExpressionInvocation(FunctionExpressionInvocation node) {
+    var output = new IndentedStringBuffer()
+        ..write("(function")
+        ..write(node.argumentList.accept(this))
+        ..write(" {\n")
+        ..write(new IndentedStringBuffer(node.function.accept(new BlockVisitor(cls))).indent())
+        ..write("})()");
+    return output;
+  }
+
+  visitFunctionTypedFormalParameter(FunctionTypedFormalParameter node) {
+    return node.identifier.name;
+  }
+
   visitIfStatement(IfStatement node) {
     IndentedStringBuffer output = new IndentedStringBuffer()
         ..write("if (")
@@ -158,7 +216,7 @@ class BlockVisitor extends NullVisitor {
         output.write(node.elseStatement.accept(this));
       } else {
         output..write("{\n")
-            ..write(node.elseStatement.accept(this).indent())
+            ..write(new IndentedStringBuffer(node.elseStatement.accept(this)).indent())
             ..write("}");
       }
     }
@@ -176,7 +234,9 @@ class BlockVisitor extends NullVisitor {
       assert(node.argumentList.accept(this).toString() == "()");
       return "{}";
     } else if (typeName == "List") {
-      assert(node.argumentList.accept(this).toString() == "()");
+      if (node.argumentList.accept(this).toString() != "()") {
+        print("Arguments to List constructor ignored: $node");
+      } // TODO: List.generate, List(size).
       return "[]";
     }
     return "new ${node.constructorName.accept(this)}${node.argumentList.accept(this)}";
@@ -191,11 +251,35 @@ class BlockVisitor extends NullVisitor {
   }
 
   visitInterpolationString(InterpolationString node) {
-    return node.value;
+    return node.contents.toString();
+  }
+
+  visitIsExpression(IsExpression node) {
+    var types = {
+        "num" : "number",
+        "String" : "string",
+        "Map" : "object",
+        "List" : "object",
+        "Function" : "function",
+    };
+    var type = node.type.name.name;
+    var jsType = types[type];
+    if (jsType == null) {
+      return "${node.expression.accept(this)} instanceof $type"; // TODO: make this better
+    }
+    return "typeof ${node.expression.accept(this)} == '$jsType'";
   }
 
   visitListLiteral(ListLiteral node) {
     return "[${node.elements.map((e) => e.accept(this)).join(', ')}]";
+  }
+
+  visitMapLiteral(MapLiteral node) {
+    return "{" + node.entries.map((n) => n.accept(this)).join(", ") + "}";
+  }
+
+  visitMapLiteralEntry(MapLiteralEntry node) {
+    return "${node.key.accept(this)} : ${node.value.accept(this)}";
   }
 
   visitMethodDeclaration(MethodDeclaration node) {
@@ -245,6 +329,11 @@ class BlockVisitor extends NullVisitor {
     return "${node.operand.accept(this)}${node.operator}";
   }
 
+  visitPrefixExpression(PrefixExpression node) {
+    assert(["!", "++", "--", "-"].contains(node.operator.toString()));
+    return "${node.operator}${node.operand.accept(this)}";
+  }
+
   visitPrefixedIdentifier(PrefixedIdentifier node) {
     return "${node.prefix.accept(this)}.${node.identifier.name}";
   }
@@ -254,7 +343,13 @@ class BlockVisitor extends NullVisitor {
     return "${node.target.accept(this)}.${node.propertyName.name}";
   }
 
+  visitRethrowExpression(RethrowExpression node) {
+    assert(errorVariableName != null);
+    return "throw $errorVariableName";
+  }
+
   visitReturnStatement(ReturnStatement node) {
+    if (node.expression == null) return "return;";
     return "return ${node.expression.accept(this)};";
   }
 
@@ -264,10 +359,15 @@ class BlockVisitor extends NullVisitor {
 
   visitSimpleIdentifier(SimpleIdentifier node) {
     var name = node.name;
-    // Very stupid unresolved check, broken by shadowing, but should work
-    if (_isField(name)) {
+    // unresolved check, broken by shadowing, but should work usually
+    var field = _getField(name);
+    if (field != null) {
       assert(!GLOBAL_REPLACE.containsKey(name));
-      return "this.${name}";
+      if (field.isStatic) {
+        return "${cls.name}.$name";
+      } else {
+        return "this.$name";
+      }
     }
     if (GLOBAL_REPLACE.containsKey(name)) return GLOBAL_REPLACE[name];
     return name;
@@ -279,17 +379,77 @@ class BlockVisitor extends NullVisitor {
   }
 
   visitStringInterpolation(StringInterpolation node) {
-    return '${node.beginToken}${node.elements.map((e) => e.accept(this)).join()}${node.endToken}';
+    // TODO: Multiline
+    return '${node.elements.map((e) => e.accept(this)).join()}';
   }
 
   visitSuperExpression(SuperExpression node) => "super";
 
+  visitSwitchCase(SwitchCase node) {
+    var statements = node.statements.map((s) => s.accept(this)).join('\n');
+    var output = new IndentedStringBuffer()
+        ..write("case (")
+        ..write(node.expression.accept(this))
+        ..write("):\n")
+        ..write(new IndentedStringBuffer(statements).indent());
+    return output;
+  }
+
+  visitSwitchDefault(SwitchDefault node) {
+    var statements = node.statements.map((s) => s.accept(this)).join("\n");
+    return "default:\n" + new IndentedStringBuffer(statements).indent().toString();
+  }
+
+  visitSwitchStatement(SwitchStatement node) {
+    var members = node.members.map((m) => m.accept(this)).join('\n');
+    var output = new IndentedStringBuffer()
+        ..write("switch (")
+        ..write(node.expression.accept(this))
+        ..write(") {\n")
+        ..write(new IndentedStringBuffer(members).indent())
+        ..write("}");
+    return output;
+  }
+
   visitThisExpression(ThisExpression node) => "this";
+
+  visitThrowExpression(ThrowExpression node) => "throw ${node.expression.accept(this)}";
+
+  visitTryStatement(TryStatement node) {
+    var output = new IndentedStringBuffer()
+        ..write("try {\n")
+        ..write(new IndentedStringBuffer(node.body.accept(this)).indent())
+        ..write("}");
+    if (node.catchClauses.isNotEmpty) {
+      assert(node.catchClauses.length == 1);
+      var catchClause = node.catchClauses.first;
+      assert(catchClause.onKeyword == null);
+      var catchVisitor = new BlockVisitor(cls)
+          ..errorVariableName = catchClause.exceptionParameter.name;
+      var exceptionVar = catchClause.exceptionParameter.name;
+      var stackParam = catchClause.stackTraceParameter;
+      var catchOutput = new IndentedStringBuffer();
+      if (stackParam != null) {
+        catchOutput.writeln("var ${stackParam.name} = ${exceptionVar}.stack;");
+      }
+      catchOutput.write(catchClause.body.accept(catchVisitor));
+      output
+          ..write(" catch (${exceptionVar}) {\n")
+          ..write(catchOutput.indent())
+          ..write("}");
+    }
+    if (node.finallyBlock != null) {
+      output..write(" finally {\n")
+            ..write(new IndentedStringBuffer(node.finallyBlock.accept(this)).indent())
+            ..write("}");
+    }
+    return output;
+  }
 
   visitVariableDeclaration(VariableDeclaration node) {
     _checkDeclarationShadowing(node.name.toString());
-    if (node.initializer == null) return node.name.toString();
-    return "${node.name.toString()} = ${node.initializer.accept(this)}";
+    var initializer = node.initializer == null ? "null" : node.initializer.accept(this);
+    return "${node.name.toString()} = $initializer";
   }
 
   visitVariableDeclarationList(VariableDeclarationList node) {
@@ -306,7 +466,7 @@ class BlockVisitor extends NullVisitor {
         ..write("while (")
         ..write(node.condition.accept(this))
         ..write(") {\n")
-        ..write(node.body.accept(this).indent())
+        ..write(new IndentedStringBuffer(node.body.accept(this)).indent())
         ..write("}");
     return output;
   }

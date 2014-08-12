@@ -57,6 +57,25 @@ class Methods2 {
   }
 }
 
+@xdescribe // Named params not supported
+class Methods3 {
+  helper1({param}) => param;
+  @it
+  shouldAcceptNamedParameters() {
+    return helper1(param: 5);
+  }
+  helper2({param: 5}) => param;
+  @it
+  shouldAcceptNamedParametersWithDefaultValues() {
+    return helper2();
+  }
+  helper3(param1, {param2, param3: 4}) => param1 + param2 + param3;
+  @it
+  shouldAcceptAMixOfParameters() {
+    return helper3(2, param2: 3);
+  }
+}
+
 @describe
 class Constructors1 {
   var field1;
@@ -99,8 +118,29 @@ class ConstructorHelper3 {
 }
 
 @describe
+class StaticFields {
+  static var field1;
+  static var field2 = 0;
+  @it
+  shouldBeSetToNullByDefault() => field1;
+  @it
+  shouldBeSetToGivenValues() => field2;
+  @it
+  shouldBeStatic() {
+    new StaticFieldsHelper().increment();
+    new StaticFieldsHelper().increment();
+    return StaticFieldsHelper.field1;
+  }
+}
+
+class StaticFieldsHelper {
+  static var field1 = 0;
+  increment() => field1++;
+}
+
+@describe
 class VariableDeclarations {
-  @xit
+  @it
   shouldDefaultToNull() {
     var a, b, c;
     return a;
@@ -113,7 +153,7 @@ class VariableDeclarations {
 }
 
 @describe
-class Statements {
+class Blocks {
   @it
   shouldSupportIfElseAndComparisons() {
     if (1 > 2) {
@@ -143,6 +183,12 @@ class Statements {
     }
     for (; false;)
       i = 0;
+    return i;
+  }
+  @it
+  shouldSupportWhileLoops() {
+    var i = 0;
+    while (i < 10) i++;
     return i;
   }
 }

@@ -1,10 +1,14 @@
 import 'package:analyzer/analyzer.dart';
 import 'writer.dart';
+import 'dart:math' show min;
 
 class NullVisitor implements AstVisitor {
   
   _complain(node) {
-    print("Undefined in ${this.runtimeType}: ${node.runtimeType}");
+    String str = node.toString();
+    print("${this.runtimeType.toString().padLeft(17)} " +
+          "<${node.runtimeType.toString()}>".padRight(33) +
+          "${str.substring(0, min(str.length, 46))}");
     return new IndentedStringBuffer("<${node.runtimeType}>");
   }
   

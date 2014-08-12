@@ -14,9 +14,9 @@ main(List<String> arguments) {
       ..addFlag(HELP, help: "Display this message", negatable: false, abbr: 'h')
       ..addFlag(TEST, help: "Print errors and continue execution", negatable: false, abbr: 't');
 
-  StringBuffer usageBuffer = new StringBuffer("Usage: dart2es6 [options] dartfile\n");
-  usageBuffer.write('\nTranspiles Dart to ES6.\n\n Options:\n');
-  usageBuffer.write(parser.getUsage());
+  StringBuffer usageBuffer = new StringBuffer("Usage: dart2es6 [options] dartfile\n")
+      ..write('\nTranspiles Dart to ES6.\n\n Options:\n')
+      ..write(parser.getUsage());
   var usage = usageBuffer.toString();
 
   var input, output;

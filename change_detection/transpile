@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+# dart -c ../dart2es6 test/dirty_checking_change_detector_spec.dart -o out/dirty_checking_change_detector_spec.js
+
+for i in lib/*
+do
+    out=${i/lib/out}
+    out=${out/dart/js}
+    dart -c ../dart2es6 $i -o $out
+done

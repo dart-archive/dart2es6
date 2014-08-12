@@ -1,9 +1,11 @@
-# Don’t commit the following directories created by pub.
 build/
 packages/
 test/packages
 test/out
+test/
 node_modules/
+change_detection/out
+change_detection/packages
 
 # Or the files created by dart2js.
 *.dart.js

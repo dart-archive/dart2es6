@@ -9,6 +9,10 @@ import 'package:dart2es6/dart2es6.dart';
 const String DUMMY_CLASS_NAME = "TEST_CLASS_NAME";
 const String DUMMY_METHOD_NAME = "TEST_METHOD_NAME";
 
+List<String> testFiles = [
+    "unittest"
+];
+
 Future test(String p) {
   var curDir = path.dirname(path.fromUri(Platform.script));
   Map<String, List<String>> testCaseNames;
@@ -17,7 +21,7 @@ Future test(String p) {
   var transpilerOutput = path.join(curDir, 'out', 'transpiler', p + '.js');
   var traceurOutput = path.join(curDir, 'out', 'traceur', p + '.js');
 
-  var traceurRuntime = new File(path.join(curDir, "traceur.js")).readAsStringSync();
+  var traceurRuntime = new File(path.join(curDir, "assets", "traceur.js")).readAsStringSync();
 
   // The entire Js file gets copied for each test so only one traceur call is needed
   // Dart is done the same way to match
@@ -81,10 +85,10 @@ Future test(String p) {
     testCaseNames = _processTestFile(f, sink);
     sink.close();
   }).then((_) {
-    return Process.run("dart", [dart2es6Path, '-o', transpilerOutput, preprocessorOutput])
+    return Process.run("dart", ['-c', dart2es6Path, '-o', transpilerOutput, preprocessorOutput])
         .then((ProcessResult results) {
-          _checkResults(results);
           if (results.stdout.isNotEmpty) print(results.stdout);
+          _checkResults(results);
           new File(transpilerOutput).writeAsStringSync(
               "\nconsole.log(new $DUMMY_CLASS_NAME().$DUMMY_METHOD_NAME());\n", mode: FileMode.APPEND);
         });
@@ -112,7 +116,7 @@ void _checkResults(ProcessResult results) {
 }
 
 //TODO: Tree shake unused helper classes
-//TODO: Automatically ddescribe parent of iit
+//TODO: Handle iit properly across classes
 /// writes dart file with only selected test cases to sink, tree shakes helpers
 /// returns names of tests
 Map<String, List<String>> _processTestFile(String file, StringSink sink) {
@@ -165,9 +169,6 @@ Map<String, List<String>> _processTestFile(String file, StringSink sink) {
   return testNames;
 }
 
-List<String> testFiles = [
-  "unittest"
-];
 main() {
   Future.forEach(testFiles, (f) => test(f));
 }
