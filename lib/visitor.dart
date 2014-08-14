@@ -2,6 +2,8 @@ library dart2es6.visitor;
 
 import 'package:analyzer/analyzer.dart';
 import 'package:analyzer/src/generated/element.dart' show DartType;
+import 'package:path/path.dart' as Path;
+import 'transpiler.dart';
 import 'visitor_null.dart';
 import 'writer.dart';
 import 'dart:io';
@@ -12,9 +14,15 @@ part "replacements.dart";
 
 _doesNotShadow(String name) => true; // TODO: top level shadowing check against globals
 
+/**
+ * Transpilation starts with this visitor. Processes top level declarations and directives,
+ * assigning tasks to other visitors.
+ */
 class MainVisitor extends NullVisitor {
 
-  MainVisitor();
+  final String path;
+
+  MainVisitor(this.path);
 
   visitClassDeclaration(ClassDeclaration node) {
     return node.accept(new ClassVisitor());
@@ -22,12 +30,24 @@ class MainVisitor extends NullVisitor {
 
   visitCompilationUnit(CompilationUnit node) {
     IndentedStringBuffer output = new IndentedStringBuffer();
+    node.directives.where((d) => d is! PartDirective).forEach((directive) {
+      output.writeln(directive.accept(this));
+    });
+
     node.declarations.forEach((declaration) {
       var d = declaration.accept(this);
       output.write(d);
       output.write('\n');
     });
+
+    node.directives.where((d) => d is PartDirective).forEach((PartDirective part) {
+      output.writeln(part.accept(this));
+    });
     return output;
+  }
+
+  visitExportDirective(ExportDirective node) {
+    return visitNameSpaceDirective(node);
   }
 
   visitFunctionDeclaration(FunctionDeclaration node) {
@@ -36,6 +56,58 @@ class MainVisitor extends NullVisitor {
 
   visitFunctionTypeAlias(FunctionTypeAlias node) {
     return "// $node";
+  }
+
+  visitHideCombinator(HideCombinator node) {
+    assert("Hide not supported" == "");
+    return "";
+  }
+
+  visitImportDirective(ImportDirective node) {
+    return visitNameSpaceDirective(node);
+  }
+
+  visitNameSpaceDirective(NamespaceDirective node) {
+    var uri = node.uri.stringValue;
+    if (uri.startsWith("dart:")) return "";
+    assert(!uri.startsWith("package:"));
+    uri = uri.replaceAll(".dart", "");
+    uri = "./" + uri;
+
+    if (node is ImportDirective && node.asToken != null) {
+      assert (node.combinators.isEmpty);
+      return "module ${node.prefix.name} from '$uri';";
+    }
+
+    var output = new IndentedStringBuffer();
+    output.write(node is ImportDirective ? "import " : "export ");
+
+    if (node.combinators.isEmpty) {
+      output.write(node is ImportDirective ? "\$" : "*");
+    } else {
+      output.write("{\n");
+      var show = node.combinators.map((c) => c.accept(this)).join(",\n");
+      output..write(new IndentedStringBuffer(show).indent())
+        ..write("}");
+    }
+    output.write(" from '$uri';");
+    return output;
+  }
+
+  visitLibraryDirective(LibraryDirective node) => "";
+
+  visitPartDirective(PartDirective node) {
+    var uri = node.uri.stringValue;
+    var p = Path.join(Path.dirname(path), uri);
+    return new Transpiler.fromPath(p).transpile();
+  }
+
+  visitPartOfDirective(PartOfDirective node) {
+    return "/* $node */";
+  }
+
+  visitShowCombinator(ShowCombinator node) {
+    return node.shownNames.map((n) => n.name).join(",\n");
   }
 
   visitTopLevelVariableDeclaration(TopLevelVariableDeclaration node) {
@@ -96,15 +168,18 @@ class ClassVisitor extends NullVisitor {
     if (node.documentationComment != null) {
       output.writeln(node.documentationComment.accept(new BlockVisitor()));
     }
-    output.write("export class $name ");
+    if (name[0] != "_") output.write("export "); // private
+    output.write("class $name ");
     if (node.extendsClause != null) output.write("${node.extendsClause.accept(this)} ");
     output.write("{\n");
+
     var input = new IndentedStringBuffer();
     input.write(node.members.where((m) => m is! FieldDeclaration).map((ClassMember member) {
       return member.accept(this);
     }).join('\n\n'));
     input.indent();
     output.write(input);
+
     output.write('}\n');
     fields.where((f) => f.isStatic).forEach((field) {
       var value = field.value == null ? "null" : field.value.accept(new BlockVisitor());

@@ -1,6 +1,8 @@
 part of dart2es6.visitor;
 
 class TestVisitor extends MainVisitor {
+  TestVisitor(this.path);
+
   visitClassDeclaration(ClassDeclaration node) {
     try {
       return super.visitClassDeclaration(node);

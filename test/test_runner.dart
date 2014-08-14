@@ -4,7 +4,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:guinness/guinness.dart';
 import 'package:path/path.dart' as path;
-import 'package:dart2es6/dart2es6.dart';
+import 'package:dart2es6/transpiler.dart';
 
 const String DUMMY_CLASS_NAME = "TEST_CLASS_NAME";
 const String DUMMY_METHOD_NAME = "TEST_METHOD_NAME";

@@ -2,7 +2,15 @@
 set -e
 # dart -c ../dart2es6 test/dirty_checking_change_detector_spec.dart -o out/dirty_checking_change_detector_spec.js
 
-for i in lib/*
+FILES="lib/change_detection.dart
+lib/dirty_checking_change_detector.dart
+lib/dirty_checking_change_detector_dynamic.dart
+lib/dirty_checking_change_detector_static.dart
+lib/watch_group.dart
+lib/watch_group_dynamic.dart
+lib/watch_group_static.dart"
+
+for i in $FILES
 do
     out=${i/lib/out}
     out=${out/dart/js}

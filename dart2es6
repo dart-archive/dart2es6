@@ -2,17 +2,18 @@
 import 'dart:io';
 import 'package:args/args.dart';
 import 'package:path/path.dart' as path;
-import 'lib/dart2es6.dart';
+import 'lib/transpiler.dart';
 
 main(List<String> arguments) {
   var OUTPUT = 'output';
   var HELP = 'help';
   var TEST = 'test';
+  var SKIP_PART = 'skip-part';
   ArgResults args;
   final parser = new ArgParser(allowTrailingOptions: true)
       ..addOption(OUTPUT, help: "Generate the output into <file>", abbr: 'o', defaultsTo: 'out.js')
       ..addFlag(HELP, help: "Display this message", negatable: false, abbr: 'h')
-      ..addFlag(TEST, help: "Print errors and continue execution", negatable: false, abbr: 't');
+      ..addFlag(TEST, help: "On error, print and continue execution", negatable: false, abbr: 't');
 
   StringBuffer usageBuffer = new StringBuffer("Usage: dart2es6 [options] dartfile\n")
       ..write('\nTranspiles Dart to ES6.\n\n Options:\n')
