@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-# dart -c ../dart2es6 test/dirty_checking_change_detector_spec.dart -o out/dirty_checking_change_detector_spec.js
+dart -c ../dart2es6 test/dirty_checking_change_detector_spec.dart -o out/dirty_checking_change_detector_spec.js
 
 FILES="lib/change_detection.dart
 lib/dirty_checking_change_detector.dart

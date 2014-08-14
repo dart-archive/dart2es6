@@ -180,6 +180,10 @@ class BlockVisitor extends NullVisitor {
     return output;
   }
 
+  visitFunctionDeclarationStatement(FunctionDeclarationStatement node) {
+    return node.functionDeclaration.accept(this);
+  }
+
   visitFunctionExpression(FunctionExpression node) {
     IndentedStringBuffer output = new IndentedStringBuffer()
         ..write(node.parameters.accept(this))

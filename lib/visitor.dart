@@ -69,8 +69,10 @@ class MainVisitor extends NullVisitor {
 
   visitNameSpaceDirective(NamespaceDirective node) {
     var uri = node.uri.stringValue;
-    if (uri.startsWith("dart:")) return "";
-    assert(!uri.startsWith("package:"));
+    if (uri.startsWith("package:") || uri.startsWith("dart:")) {
+      print("Tried importing '$uri', skipping.");
+      return "";
+    };
     uri = uri.replaceAll(".dart", "");
     uri = "./" + uri;
 

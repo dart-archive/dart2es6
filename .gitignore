@@ -2,10 +2,12 @@ build/
 packages/
 test/packages
 test/out
-test/
+test/assets/packages
 node_modules/
 change_detection/out
 change_detection/packages
+change_detection/test/out
+change_detection/test/packages
 
 # Or the files created by dart2js.
 *.dart.js
