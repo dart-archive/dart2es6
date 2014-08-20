@@ -16,16 +16,21 @@ class Transpiler {
   CompilationUnit compilationUnit;
   MainVisitor visitor;
 
+  /**
+   * Sets visitor, finds file, parses, resolves, and sets compilationUnit to result
+   */
   Transpiler.fromPath(String path, {test: false})
+      // if testing, use TestVisitor that does not quit on thrown exception, let guinness handle it
       : visitor = (test ? new TestVisitor(path) : new MainVisitor(path)) {
     print(path);
+
+    // No need to understand how the compilationUnit is obtained here, the code is just
+    // required calls as per analyzer 0.21.1 API to build AST and resolve types.
     JavaSystemIO.setProperty("com.google.dart.sdk", dartSdkDirectory);
     DartSdk sdk = DirectoryBasedDartSdk.defaultSdk;
-
     AnalysisContext context = AnalysisEngine.instance.createAnalysisContext();
     context.sourceFactory = new SourceFactory([new DartUriResolver(sdk), new FileUriResolver()]);
     Source source = new FileBasedSource.con1(new JavaFile(path));
-
     ChangeSet changeSet = new ChangeSet();
     changeSet.addedSource(source);
     context.applyChanges(changeSet);

@@ -1,8 +1,9 @@
 library dart2es6.writer;
 
 /**
- * StringBuffer with indent method. Implemented inefficiently for now but should be ok
- * Could be replaced later by efficient implementation that keeps track of lines if too slow
+ * StringBuffer with indent method. Implemented inefficiently for now as a hack
+ * Should be replaced later by efficient implementation that keeps track of individual lines
+ * instead of redoing the entire string when indenting.
  */
 class IndentedStringBuffer {
 
@@ -24,6 +25,10 @@ class IndentedStringBuffer {
   clear() => buffer.clear();
   toString() => buffer.toString();
 
+  /**
+   * returns this to allow wrapping Strings with an IndentedStringBuffer to indent them, i.e.
+   * "hello" => new IndentedStringBuffer("hello").indent()
+   */
   IndentedStringBuffer indent([int levels = 1]) {
     var str = buffer.toString();
     buffer.clear();

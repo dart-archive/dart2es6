@@ -2,6 +2,11 @@ import 'package:analyzer/analyzer.dart';
 import 'writer.dart';
 import 'dart:math' show min;
 
+
+/**
+ * All visitors extend this so when a visit method for a node type has not been implemented,
+ * an error message can be produced.
+ */
 class NullVisitor implements AstVisitor {
   
   _complain(node) {

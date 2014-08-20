@@ -12,7 +12,6 @@ part 'visitor_block.dart';
 part 'visitor_test.dart';
 part "replacements.dart";
 
-_doesNotShadow(String name) => true; // TODO: top level shadowing check against globals
 
 /**
  * Transpilation starts with this visitor. Processes top level declarations and directives,
@@ -119,6 +118,8 @@ class MainVisitor extends NullVisitor {
   }
 }
 
+
+// Most of these fields are not actually used
 class Field {
   final String name;
   final Expression value;
