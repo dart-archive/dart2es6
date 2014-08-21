@@ -57,7 +57,8 @@ class Methods2 {
   }
 }
 
-@xdescribe // Named params not supported
+// Named params not supported
+@xdescribe
 class Methods3 {
   helper1({param}) => param;
   @it

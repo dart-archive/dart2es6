@@ -94,6 +94,7 @@ Future test(String p) {
         });
   }).then((_) {
     // needs `npm install -g traceur`
+    assert(new File(transpilerOutput) != null);
     return Process.run("traceur", ['--out', traceurOutput, transpilerOutput])
         .then((ProcessResult results) => _checkResults(results));
   }).then((_) {
@@ -117,6 +118,7 @@ void _checkResults(ProcessResult results) {
 
 //TODO: Tree shake unused helper classes
 //TODO: Handle iit properly across classes
+//TODO: Comments after xdescribe breaks regex
 /// writes dart file with only selected test cases to sink, tree shakes helpers
 /// returns names of tests
 Map<String, List<String>> _processTestFile(String file, StringSink sink) {
