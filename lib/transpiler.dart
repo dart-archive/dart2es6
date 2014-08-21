@@ -15,14 +15,16 @@ import 'dart:io';
 class Transpiler {
   CompilationUnit compilationUnit;
   MainVisitor visitor;
+  String path;
 
   /**
    * Sets visitor, finds file, parses, resolves, and sets compilationUnit to result
    */
   Transpiler.fromPath(String path, {test: false})
       // if testing, use TestVisitor that does not quit on thrown exception, let guinness handle it
-      : visitor = (test ? new TestVisitor(path) : new MainVisitor(path)) {
-    print("Transpiler created for $path");
+      : visitor = (test ? new TestVisitor(path) : new MainVisitor(path)),
+        this.path = path {
+    print("Transpiling $path");
 
     // No need to understand how the compilationUnit is obtained here, the code is just
     // required calls as per analyzer 0.21.1 API to build AST and resolve types.
@@ -40,6 +42,7 @@ class Transpiler {
   }
 
   String transpile() {
+    print("Transpiling $path");
     return compilationUnit.accept(visitor).toString();
   }
 }

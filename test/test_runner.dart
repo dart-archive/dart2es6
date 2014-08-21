@@ -32,7 +32,7 @@ Future test(String p) {
         .replaceAll(DUMMY_METHOD_NAME, methodName);
     var file = new File(p);
     var sink = file.openWrite(mode: FileMode.WRITE)
-        ..write(traceurRuntime)
+        ..write(traceurRuntime) // needed to run traceur output
         ..write(code);
     return sink.close().then((_) {
       return Process.run("node", [p]).then((result) {
@@ -66,6 +66,9 @@ Future test(String p) {
     });
   }
 
+  /**
+   * Runs method in dart & JS, compares results with guinness
+   */
   void _testClass(String className, List<String> methodNames) {
     describe(_convertName(className), () {
       methodNames.forEach((methodName) {
@@ -116,9 +119,16 @@ void _checkResults(ProcessResult results) {
   }
 }
 
-//TODO: Tree shake unused helper classes
-//TODO: Handle iit properly across classes
-//TODO: Comments after xdescribe breaks regex
+/**
+ * TODO:
+ * 1. Add a tree shaker to remove helper classes that are not used. Helper classes do not have a
+ *    @describe, and if the test that uses them gets x'd, the helper should be removed too to not
+ *    throw an error.
+ * 2. Bug: If a method has @iit, the class must have @ddescribe or else all other classes's methods
+ *    still get run. aka @iit is currently only local to the class that it's in
+ * 3. Bug: Having a comment after [@describe, @it, ...] or after the class open brace breaks the
+ *    regex and results in a non-match. Fix regex to allow these comments
+ */
 /// writes dart file with only selected test cases to sink, tree shakes helpers
 /// returns names of tests
 Map<String, List<String>> _processTestFile(String file, StringSink sink) {
