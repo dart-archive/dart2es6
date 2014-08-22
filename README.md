@@ -1,10 +1,10 @@
-[![Build Status](https://travis-ci.org/antingshen/dart2es6.svg?branch=master)](https://travis-ci.org/antingshen/dart2es6)
+[![Build Status](https://travis-ci.org/angular/dart2es6.svg?branch=master)](https://travis-ci.org/angular/dart2es6)
 
 # dart2es6
 
 _The Dart to ECMAScript 6 transpiler_
 
-## For design doc & TODO's, see [wiki page](https://github.com/antingshen/dart2es6/wiki/Doc)
+## For design doc & TODO's, see [wiki page](https://github.com/angular/dart2es6/wiki/Doc)
 
 ## Usage
 
