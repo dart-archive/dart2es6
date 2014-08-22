@@ -24,7 +24,6 @@ class Transpiler {
       // if testing, use TestVisitor that does not quit on thrown exception, let guinness handle it
       : visitor = (test ? new TestVisitor(path) : new MainVisitor(path)),
         this.path = path {
-    print("Transpiling $path");
 
     // No need to understand how the compilationUnit is obtained here, the code is just
     // required calls as per analyzer 0.21.1 API to build AST and resolve types.

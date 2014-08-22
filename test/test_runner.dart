@@ -128,6 +128,7 @@ void _checkResults(ProcessResult results) {
  *    still get run. aka @iit is currently only local to the class that it's in
  * 3. Bug: Having a comment after [@describe, @it, ...] or after the class open brace breaks the
  *    regex and results in a non-match. Fix regex to allow these comments
+ * 4. Feature: Add a way to annotate a test to expect it to error/fail
  */
 /// writes dart file with only selected test cases to sink, tree shakes helpers
 /// returns names of tests
